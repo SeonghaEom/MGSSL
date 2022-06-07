@@ -48,7 +48,7 @@ def scaffold_split(dataset, smiles_list, task_idx=None, null_value=0,
     [valid_smiles_list], [test_smiles_list])
     """
     np.testing.assert_almost_equal(frac_train + frac_valid + frac_test, 1.0)
-
+    print(len(dataset),len(smiles_list))
     if task_idx != None:
         # filter based on null values in task_idx
         # get task array
@@ -57,18 +57,22 @@ def scaffold_split(dataset, smiles_list, task_idx=None, null_value=0,
         non_null = y_task != null_value
         smiles_list = list(compress(enumerate(smiles_list), non_null))
     else:
-        non_null = np.ones(len(dataset)) == 1
+        non_null = np.ones((len(dataset))) == 1
+        print(non_null.size)
         smiles_list = list(compress(enumerate(smiles_list), non_null))
 
     # create dict of the form {scaffold_i: [idx1, idx....]}
     all_scaffolds = {}
+    print(len(smiles_list))
     for i, smiles in smiles_list:
+        print(i)
         scaffold = generate_scaffold(smiles, include_chirality=True)
         if scaffold not in all_scaffolds:
             all_scaffolds[scaffold] = [i]
         else:
             all_scaffolds[scaffold].append(i)
 
+    print(all_scaffolds)
     # sort from largest to smallest sets
     all_scaffolds = {key: sorted(value) for key, value in all_scaffolds.items()}
     all_scaffold_sets = [
@@ -92,9 +96,11 @@ def scaffold_split(dataset, smiles_list, task_idx=None, null_value=0,
     assert len(set(train_idx).intersection(set(valid_idx))) == 0
     assert len(set(test_idx).intersection(set(valid_idx))) == 0
 
-    train_dataset = dataset[torch.tensor(train_idx)]
-    valid_dataset = dataset[torch.tensor(valid_idx)]
-    test_dataset = dataset[torch.tensor(test_idx)]
+    print(len(train_idx))
+    train_dataset = dataset[torch.tensor(train_idx).long()]
+    print(len(train_dataset))
+    valid_dataset = dataset[valid_idx]
+    test_dataset = dataset[test_idx]
 
     if not return_smiles:
         return train_dataset, valid_dataset, test_dataset

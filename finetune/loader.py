@@ -260,7 +260,7 @@ def create_standardized_mol_id(smiles):
 class MoleculeDataset(InMemoryDataset):
     def __init__(self,
                  root,
-                 #data = None,
+                #  data = None,
                  #slices = None,
                  transform=None,
                  pre_transform=None,
@@ -288,7 +288,7 @@ class MoleculeDataset(InMemoryDataset):
         if not empty:
             self.data, self.slices = torch.load(self.processed_paths[0])
 
-
+        # print(self.dataset, self.raw_paths, self.processed_paths)
     def get(self, idx):
         data = Data()
         for key in self.data.keys:
@@ -446,6 +446,8 @@ class MoleculeDataset(InMemoryDataset):
                     continue
 
         elif self.dataset == 'tox21':
+            print("hi")
+            print(self.raw_paths)
             smiles_list, rdkit_mol_objs, labels = \
                 _load_tox21_dataset(self.raw_paths[0])
             for i in range(len(smiles_list)):

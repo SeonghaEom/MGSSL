@@ -12,7 +12,7 @@ import numpy as np
 from optparse import OptionParser
 from gnn_model import GNN
 
-sys.path.append('./util/')
+sys.path.append('./util')
 
 from mol_tree import *
 from nnutils import *
@@ -107,6 +107,7 @@ def main():
     parser.add_argument('--order', type=str, default="bfs",
                         help='motif tree generation order (bfs or dfs)')
     args = parser.parse_args()
+    print(args)
 
     torch.manual_seed(0)
     np.random.seed(0)
@@ -124,6 +125,7 @@ def main():
 
     vocab = [x.strip("\r\n ") for x in open(args.vocab)]
     vocab = Vocab(vocab)
+    print(vocab.size())
     motif_model = Motif_Generation(vocab, args.hidden_size, args.latent_size, 3, device, args.order).to(device)
 
     model_list = [model, motif_model]

@@ -16,6 +16,7 @@ def set_batch_nodeID(mol_batch, vocab):
     tot = 0
     for mol_tree in mol_batch:
         for node in mol_tree.nodes:
+            # print(node.smiles)
             node.idx = tot
             node.wid = vocab.get_index(node.smiles)
             tot += 1

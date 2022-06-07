@@ -66,8 +66,8 @@ class Motif_Generation_bfs(nn.Module):
         '''
 
         max_iter = max([len(tr) for tr in traces])
-        padding = create_var(torch.zeros(self.hidden_size), False)
-        stop_embedding = create_var(torch.zeros(self.hidden_size), True)
+        padding = create_var(torch.zeros(self.hidden_size), False).to(self.device)
+        stop_embedding = create_var(torch.zeros(self.hidden_size), True).to(self.device)
         h = {}
 
         for t in range(max_iter):
@@ -89,6 +89,7 @@ class Motif_Generation_bfs(nn.Module):
                 node_x, real_y, _ = prop
                 # Neighbors for message passing (target not included)
                 cur_nei = [h[(node_y.idx, node_x.idx)] for node_y in node_x.neighbors if node_y.idx != real_y.idx]
+                cur_nei = [x.to(self.device) for x in cur_nei]
                 pad_len = MAX_NB - len(cur_nei)
                 if pad_len>= 0:
                     cur_h_nei.extend(cur_nei)
@@ -113,8 +114,11 @@ class Motif_Generation_bfs(nn.Module):
             cur_x = torch.stack(em_list, dim=0)
 
             # Message passing
-            cur_h_nei = torch.stack(cur_h_nei, dim=0).view(-1, MAX_NB, self.hidden_size)
+            #print(cur_h_nei[0].get_device())
+            cur_h_nei = torch.stack(cur_h_nei, dim=0).view(-1, MAX_NB, self.hidden_size).to(self.device)
+            #print(cur_x.get_device(), cur_h_nei.get_device())
             new_h = GRU(cur_x, cur_h_nei, self.W_z, self.W_r, self.U_r, self.W_h)
+            #print(new_h.get_device())
 
             # Node Aggregate
             '''
@@ -148,7 +152,8 @@ class Motif_Generation_bfs(nn.Module):
                 #cur_batch = create_var(torch.LongTensor(batch_list))
                 #pred_mol_vecs.append(mol_vec.index_select(0, cur_batch))
 
-                cur_pred = create_var(torch.LongTensor(pred_list))
+                cur_pred = create_var(torch.LongTensor(pred_list)).to(self.device)
+                #print(cur_pred.get_device())
                 pred_hiddens.append(new_h.index_select(0, cur_pred))
                 pred_targets.extend(pred_target)
 
@@ -159,8 +164,8 @@ class Motif_Generation_bfs(nn.Module):
         pred_vecs = pred_hiddens
         pred_vecs = nn.ReLU()(self.W(pred_vecs))
         pred_scores = self.W_o(pred_vecs)
-        pred_targets = create_var(torch.LongTensor(pred_targets))
-
+        pred_targets = create_var(torch.LongTensor(pred_targets)).to(self.device)
+        #print(pred_scores.get_device(), pred_targets.get_device())
         pred_loss = self.pred_loss(pred_scores, pred_targets) / len(mol_batch)
         _, preds = torch.max(pred_scores, dim=1)
         pred_acc = torch.eq(preds, pred_targets).float()
