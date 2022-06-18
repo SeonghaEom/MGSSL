@@ -65,14 +65,14 @@ def scaffold_split(dataset, smiles_list, task_idx=None, null_value=0,
     all_scaffolds = {}
     print(len(smiles_list))
     for i, smiles in smiles_list:
-        print(i)
+        # print(i)
         scaffold = generate_scaffold(smiles, include_chirality=True)
         if scaffold not in all_scaffolds:
             all_scaffolds[scaffold] = [i]
         else:
             all_scaffolds[scaffold].append(i)
 
-    print(all_scaffolds)
+    # print(all_scaffolds)
     # sort from largest to smallest sets
     all_scaffolds = {key: sorted(value) for key, value in all_scaffolds.items()}
     all_scaffold_sets = [
@@ -96,9 +96,9 @@ def scaffold_split(dataset, smiles_list, task_idx=None, null_value=0,
     assert len(set(train_idx).intersection(set(valid_idx))) == 0
     assert len(set(test_idx).intersection(set(valid_idx))) == 0
 
-    print(len(train_idx))
+    # print(len(train_idx))
     train_dataset = dataset[torch.tensor(train_idx).long()]
-    print(len(train_dataset))
+    # print(len(train_dataset))
     valid_dataset = dataset[valid_idx]
     test_dataset = dataset[test_idx]
 

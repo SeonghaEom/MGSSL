@@ -326,7 +326,7 @@ class MoleculeDataset(InMemoryDataset):
             smiles_list = list(input_df['smiles'])
             zinc_id_list = list(input_df['zinc_id'])
             for i in range(len(smiles_list)):
-                print(i)
+                # print(i)
                 s = smiles_list[i]
                 # each example contains a single species
                 try:
@@ -446,7 +446,7 @@ class MoleculeDataset(InMemoryDataset):
                     continue
 
         elif self.dataset == 'tox21':
-            print("hi")
+            # print("hi")
             print(self.raw_paths)
             smiles_list, rdkit_mol_objs, labels = \
                 _load_tox21_dataset(self.raw_paths[0])
@@ -524,6 +524,7 @@ class MoleculeDataset(InMemoryDataset):
         elif self.dataset == 'clintox':
             smiles_list, rdkit_mol_objs, labels = \
                 _load_clintox_dataset(self.raw_paths[0])
+            print(smiles_list)
             for i in range(len(smiles_list)):
                 print(i)
                 rdkit_mol = rdkit_mol_objs[i]
@@ -1042,6 +1043,7 @@ def _load_clintox_dataset(input_path):
     labels
     """
     input_df = pd.read_csv(input_path, sep=',')
+    print(input_df.head())
     smiles_list = input_df['smiles']
     rdkit_mol_objs_list = [AllChem.MolFromSmiles(s) for s in smiles_list]
 
