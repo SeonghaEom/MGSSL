@@ -1,6 +1,6 @@
 # Motif-based Graph Self-Supervised Learning for Molecular Property Prediction
-Official Pytorch implementation of NeurIPS'21 paper "Motif-based Graph Self-Supervised Learning for Molecular Property Prediction"
-(https://arxiv.org/abs/2110.00987). 
+Reproduction of official Pytorch implementation of NeurIPS'21 paper "Motif-based Graph Self-Supervised Learning for Molecular Property Prediction"
+(https://arxiv.org/abs/2110.00987). You have to be careful with rdkit version in order to successfully reproduce all motif vocabulary
 ## Requirements
 ```
 pytorch                   1.8.1             
@@ -25,17 +25,4 @@ You can evaluate the pretrained model by finetuning on downstream tasks
 ```
 cd finetune
 python finetune.py
-```
-
-## Cite
-
-If you find this repo to be useful, please cite our paper. Thank you.
-
-```
-@article{zhang2021motif,
-  title={Motif-based Graph Self-Supervised Learning for Molecular Property Prediction},
-  author={Zhang, Zaixi and Liu, Qi and Wang, Hao and Lu, Chengqiang and Lee, Chee-Kong},
-  journal={arXiv preprint arXiv:2110.00987},
-  year={2021}
-}
 ```
