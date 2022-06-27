@@ -12,13 +12,18 @@ from tqdm import tqdm
 import numpy as np
 
 from model import GNN, GNN_graphpred
-from sklearn.metrics import roc_auc_score
+from sklearn.metrics import roc_auc_score, average_precision_score, recall_score
 
 from splitters import scaffold_split, random_split
 import pandas as pd
 
 import os
 import shutil
+import logging
+from pathlib import Path
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger()
+Path("log_base/").mkdir(parents=True, exist_ok=True)
 
 from tensorboardX import SummaryWriter
 
@@ -64,17 +69,21 @@ def eval(args, model, device, loader):
     y_scores = torch.cat(y_scores, dim = 0).cpu().numpy()
 
     roc_list = []
+    prc_list = []
+    recall_list = []
     for i in range(y_true.shape[1]):
         #AUC is only defined when there is at least one positive data.
         if np.sum(y_true[:,i] == 1) > 0 and np.sum(y_true[:,i] == -1) > 0:
             is_valid = y_true[:,i]**2 > 0
             roc_list.append(roc_auc_score((y_true[is_valid,i] + 1)/2, y_scores[is_valid,i]))
+            prc_list.append(average_precision_score((y_true[is_valid,i] + 1)/2, y_scores[is_valid,i]))
+            # recall_list.append(recall_score((y_true[is_valid,i] + 1)/2, y_scores[is_valid,i]))
 
     if len(roc_list) < y_true.shape[1]:
         print("Some target is missing!")
         print("Missing ratio: %f" %(1 - float(len(roc_list))/y_true.shape[1]))
 
-    return sum(roc_list)/len(roc_list) #y_true.shape[1]
+    return sum(roc_list)/len(roc_list), sum(prc_list)/len(prc_list), sum(recall_list)/len(recall_list) #y_true.shape[1], 
 
 
 
@@ -113,6 +122,9 @@ def main():
     parser.add_argument('--eval_train', type=int, default = 1, help='evaluating training or not')
     parser.add_argument('--num_workers', type=int, default = 4, help='number of workers for dataset loading')
     args = parser.parse_args()
+    fh = logging.FileHandler('log_base/{}.log'.format(args.dataset))
+    logger.addHandler(fh)
+    logger.info(args.dataset)
 
 
     torch.manual_seed(args.runseed)
@@ -192,14 +204,19 @@ def main():
 
         print("====Evaluation")
         if args.eval_train:
-            train_acc = eval(args, model, device, train_loader)
+            train_acc, train_prc, train_rec = eval(args, model, device, train_loader)
         else:
             print("omit the training accuracy computation")
             train_acc = 0
-        val_acc = eval(args, model, device, val_loader)
-        test_acc = eval(args, model, device, test_loader)
+        val_acc, val_prc, val_rec = eval(args, model, device, val_loader, criterion)
+        test_acc, test_prc, test_rec = eval(args, model, device, test_loader, criterion)
 
-        print("train: %f val: %f test: %f" %(train_acc, val_acc, test_acc))
+        print("ACC train: %f val: %f test: %f" %(train_acc, val_acc, test_acc))
+        print("PRC train: %f val: %f test: %f" %(train_prc, val_prc, test_prc))
+        print("REC train: %f val: %f test: %f" %(train_rec, val_rec, test_rec))
+        logger.info("ACC train: %f val: %f test: %f" %(train_acc, val_acc, test_acc))
+        logger.info("PRC train: %f val: %f test: %f" %(train_prc, val_prc, test_prc))
+        logger.info("REC train: %f val: %f test: %f" %(train_rec, val_rec, test_rec))
 
 if __name__ == "__main__":
     main()

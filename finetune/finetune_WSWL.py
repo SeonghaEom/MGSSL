@@ -14,7 +14,7 @@ from tqdm import tqdm
 import numpy as np
 
 from model import GNN, GNN_graphpred
-from sklearn.metrics import roc_auc_score, average_precision_score
+from sklearn.metrics import roc_auc_score, average_precision_score, recall_score
 
 from splitters import scaffold_split, random_split
 import pandas as pd
@@ -79,18 +79,20 @@ def eval(args, model, device, loader, criterion):
 
     roc_list = []
     prc_list = []
+    recall_list = []
     for i in range(y_true.shape[1]):
         #AUC is only defined when there is at least one positive data.
         if np.sum(y_true[:,i] == 1) > 0 and np.sum(y_true[:,i] == -1) > 0:
             is_valid = y_true[:,i]**2 > 0
             roc_list.append(roc_auc_score((y_true[is_valid,i] + 1)/2, y_scores[is_valid,i]))
             prc_list.append(average_precision_score((y_true[is_valid,i] + 1)/2, y_scores[is_valid,i]))
+            recall_list.append(recall_score((y_true[is_valid,i] + 1)/2, y_scores[is_valid,i]))
 
     if len(roc_list) < y_true.shape[1]:
         print("Some target is missing!")
         print("Missing ratio: %f" %(1 - float(len(roc_list))/y_true.shape[1]))
 
-    return sum(roc_list)/len(roc_list), sum(prc_list)/len(prc_list) #y_true.shape[1], 
+    return sum(roc_list)/len(roc_list), sum(prc_list)/len(prc_list), sum(recall_list)/len(recall_list) #y_true.shape[1], 
 
 
 
@@ -216,10 +218,10 @@ def main():
     for each in cls_nums:
         assert set(each.keys()) == set([-1, 1]), each.keys()
         cls_num_list.append(float(each[-1]/each[1]))
-    # criterion = LDAMLoss(np.array(cls_num_list))
+    criterion = LDAMLoss(np.array(cls_nums))
     print("cls num list ", cls_num_list)
-    pos_weight = torch.FloatTensor(cls_num_list).to(device)
-    criterion = nn.BCEWithLogitsLoss(reduction = "none", pos_weight=pos_weight)
+    # pos_weight = torch.FloatTensor(cls_num_list).to(device)
+    # criterion = nn.BCEWithLogitsLoss(reduction = "none", pos_weight=pos_weight)
         
 
     for epoch in range(1, args.epochs+1):
@@ -229,17 +231,19 @@ def main():
 
         print("====Evaluation")
         if args.eval_train:
-            train_acc, train_prc = eval(args, model, device, train_loader, criterion)
+            train_acc, train_prc, train_rec = eval(args, model, device, train_loader, criterion)
         else:
             print("omit the training accuracy computation")
             train_acc = 0
-        val_acc, val_prc = eval(args, model, device, val_loader, criterion)
-        test_acc, test_prc = eval(args, model, device, test_loader, criterion)
+        val_acc, val_prc, val_rec = eval(args, model, device, val_loader, criterion)
+        test_acc, test_prc, test_rec = eval(args, model, device, test_loader, criterion)
 
         print("ACC train: %f val: %f test: %f" %(train_acc, val_acc, test_acc))
         print("PRC train: %f val: %f test: %f" %(train_prc, val_prc, test_prc))
+        print("REC train: %f val: %f test: %f" %(train_rec, val_rec, test_rec))
         logger.info("ACC train: %f val: %f test: %f" %(train_acc, val_acc, test_acc))
         logger.info("PRC train: %f val: %f test: %f" %(train_prc, val_prc, test_prc))
+        logger.info("REC train: %f val: %f test: %f" %(train_rec, val_rec, test_rec))
 
 if __name__ == "__main__":
     main()
